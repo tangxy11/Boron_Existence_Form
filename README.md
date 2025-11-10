@@ -6,7 +6,7 @@
 
 ---
 
-## 🇨🇳 项目简介（Project Overview）
+## 项目简介（Project Overview）
 
 本项目是一个基于 **Python + Gradio** 构建的科研辅助工具，用于计算不同浓度条件下硼元素在水溶液体系中的存在形式（包括多种阴离子物种的比例分布），并在指定的 pH 区间内进行数值积分与可视化分析。
 
@@ -20,7 +20,7 @@
 
 ---
 
-## 🇬🇧 Project Description
+## Project Description
 
 This project provides a scientific computation tool built with **Python** and **Gradio**, designed to simulate the **speciation of boron** in aqueous systems under different concentrations and pH ranges.
 
@@ -90,4 +90,5 @@ https://huggingface.co/spaces/tangxinyu02/Boron_existence_form
 学术用途（For Research Use）
 
 本项目旨在为科研人员提供一种快速、可视化的硼物种分布计算方法。
+
 算法基于经典的酸碱平衡模型，适用于溶液化学、环境化学、材料吸附机理等研究。
