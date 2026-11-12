@@ -36,7 +36,7 @@ for name, fraction in zip(SPECIES, r["fractions"][:, 0]):
 print(r["mass_balance_residual"])
 ```
 Expected percentages, in species order: 4.054662, 25.583190, 2.564043, 0.005816, 42.735502, 25.056786.
-The file corrected_lookup.csv contains 726 concentration/pH conditions for comparison.
+A precomputed lookup table is not included; use the numerical core to reproduce selected conditions.
 
 ## Web interface
 Install requirements.txt and run python app.py (Python 3.10 recommended for the existing dependency pins).
