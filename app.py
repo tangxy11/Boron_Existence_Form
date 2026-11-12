@@ -13,58 +13,19 @@ from scipy.optimize import brentq
 import gradio as gr
 
 
-# ---------- 数值模型 ----------
-def total_boron_from_x_y(x: float, y: float) -> float:
-    """给定 x（基元量）与 y=[H+]，返回总硼浓度表达式的值。"""
-    if y <= 0:
-        return np.inf
-    term1 = x
-    term2 = (10**(-9.2))  * x / y
-    term3 = (10**(-7.29)) * (x**3) / y
-    term4 = (10**(-6.77)) * (x**5) / y
-    term5 = (10**(-14.5)) * (x**4) / (y**2)
-    term6 = (10**(-16.3)) * (x**3) / (y**2)
-    return term1 + term2 + term3 + term4 + term5 + term6
+# Corrected B-atom mass balance; see README.md.
+from boron_speciation_core import solve_boric_acid, molecular_concentrations, BORON_NUMBERS
 
+def total_boron_from_x_y(x, y):
+    return float(BORON_NUMBERS @ molecular_concentrations(x, y))
 
-def solve_x_for_y(C_total: float, y: float) -> float:
-    """在固定 [H+]=y 下，用 brentq 解 x 使总浓度==C_total。带上界扩张保证变号。"""
-    a = 1e-16
-    b = max(C_total, 1e-8)
-    fa = total_boron_from_x_y(a, y) - C_total
-    fb = total_boron_from_x_y(b, y) - C_total
-    expand = 0
-    while fa * fb > 0 and expand < 40:
-        b *= 2.0
-        fb = total_boron_from_x_y(b, y) - C_total
-        expand += 1
-    if fa * fb > 0:
-        # 极端情况下未变号，返回更接近的一端
-        return min(b, C_total)
-    return brentq(lambda xx: total_boron_from_x_y(xx, y) - C_total, a, b, maxiter=200, xtol=1e-12)
+def solve_x_for_y(C_total, y):
+    return solve_boric_acid(C_total, -np.log10(y))
 
-
-def species_from_xy(x: float, y: float, C_total: float):
-    """返回各物种占比 (k1..k5) 与累积 (Y1..Y5)。"""
-    a = (10**(-9.2))  * (x / y)
-    b = (10**(-7.29)) * (x**3 / y)
-    c = (10**(-6.77)) * (x**5 / y)
-    d = (10**(-14.5)) * (x**4 / (y**2))
-    e = (10**(-16.3)) * (x**3 / (y**2))
-
-    k1 = e / C_total
-    k2 = d / C_total
-    k3 = c / C_total
-    k4 = b / C_total
-    k5 = a / C_total
-
-    Y1 = k1
-    Y2 = k1 + k2
-    Y3 = k1 + k2 + k3
-    Y4 = k1 + k2 + k3 + k4
-    Y5 = k1 + k2 + k3 + k4 + k5
-    return k1, k2, k3, k4, k5, Y1, Y2, Y3, Y4, Y5
-
+def species_from_xy(x, y, C_total):
+    fractions = BORON_NUMBERS * molecular_concentrations(x, y) / C_total
+    k = fractions[[5, 4, 3, 2, 1]]
+    return (*k, *np.cumsum(k))
 
 def parse_concentrations(text: str):
     """支持：'0.02,0.05,0.08' 或 '0.01:0.10:0.01' 或 '0.08'。"""
@@ -132,6 +93,7 @@ def compute_and_export(conc_text, ph_min, ph_max, ph_points, show_plot, progress
                 df = pd.DataFrame({
                     "pH": pH_grid,
                     "x_solved": xs,
+                    "B(OH)3_fraction": xs / C,
                     "k1": ks_arr[:,0],
                     "k2": ks_arr[:,1],
                     "k3": ks_arr[:,2],
