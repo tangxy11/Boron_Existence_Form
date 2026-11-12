@@ -1,76 +1,45 @@
-# 🧪 硼的存在形式计算器（Boron Existence Form Calculator）
+# Boron Existence Form Calculator
+Author: Tang Xinyu, Qinghai University. MIT license.
 
-**作者（Author）:** 汤昕煜 (Tang Xinyu)  
-**单位（Affiliation）:** Qinghai University  
-**License:** MIT License  
+## Corrected model (2026-11-12)
+Total concentration is mol B/L. All fractions are fractions of B atoms, not fractions of anion molecules. The previous app omitted polyborate B-number weights; use this corrected revision for recalculation.
 
----
+Let x=[B(OH)3], h=10^(-pH). Molecular concentrations are:
+|Species|Concentration|Default log10 K|
+|---|---|---|
+|B(OH)3|x|—|
+|B(OH)4-|Ka*x/h|-9.2|
+|B3O3(OH)4-|K1*x^3/h|-7.29|
+|B5O6(OH)4-|K2*x^5/h|-6.77|
+|B4O5(OH)4^2-|K3*x^4/h^2|-14.5|
+|B3O3(OH)5^2-|K4*x^3/h^2|-16.3|
 
-## 🇨🇳 项目简介（Project Overview）
+The corresponding formation reactions from boric acid are:
+- B(OH)3 + H2O = B(OH)4- + H+
+- 3B(OH)3 = B3O3(OH)4- + H+ + 2H2O
+- 5B(OH)3 = B5O6(OH)4- + H+ + 5H2O
+- 4B(OH)3 = B4O5(OH)4^2- + 2H+ + 3H2O
+- 3B(OH)3 + H2O = B3O3(OH)5^2- + 2H+
 
-本项目基于 **Python + Gradio** 构建，旨在计算不同浓度条件下硼元素在水溶液体系中的存在形式，包括多种阴离子物种（如 B(OH)₃、B(OH)₄⁻ 等）的分布比例。  
-同时可对选定 pH 区间（如 8.6–10.1）进行数值积分，并提供可视化分析。
+Solve CT = x + c1 + 3c2 + 5c3 + 4c4 + 3c5 by bisection on [0,CT].
+Report fi=ni*ci/CT. The six fractions sum to one.
 
-### ✨ 功能摘要
+These defaults reproduce the revised author model; original literature provenance and medium-specific calibration of each constant have not been independently verified here. Concentrations approximate activities, water activity is taken as unity, and h=10^(-pH) is used within that approximation. Ionic-strength corrections, ion pairing and temperature dependence are not implemented. Predictions at high ionic strength are conditional on these assumptions.
 
-- 🔹 计算各物种分数（k₁ ~ k₅）  
-- 🔹 计算累积分布函数（Y₁ ~ Y₅）  
-- 🔹 在自定义 pH 区间计算积分值（∫kᵢ dpH）  
-- 🔹 绘制 pH 2–14 的全范围可视化曲线（带积分虚线）  
-- 🔹 导出 Excel 文件（每个浓度独立 sheet + 汇总表）  
-
----
-
-## 💻 使用方法（Usage）
-
-### 1️⃣ 安装依赖
-```bash
-pip install -r requirements.txt
+## Reproduce without a GUI
+Install NumPy, then run:
+```python
+from boron_speciation_core import calculate_speciation, SPECIES
+r = calculate_speciation(0.5, [10.0])
+for name, fraction in zip(SPECIES, r["fractions"][:, 0]):
+    print(name, 100*fraction)
+print(r["mass_balance_residual"])
 ```
+Expected percentages, in species order: 4.054662, 25.583190, 2.564043, 0.005816, 42.735502, 25.056786.
+The file corrected_lookup.csv contains 726 concentration/pH conditions for comparison.
 
----
-
-### 2️⃣ 运行程序
-```bash
-python app.py
-```
-
----
-
-### 3️⃣ 打开网页
-```bash
-https://huggingface.co/spaces/tangxinyu02/Boron_existence_form
-即可进入交互式界面
-```
-
----
-
-## 📊 输出说明（Output Explanation）
-
-- 输出结果包括：
-
-- ✅ Excel 文件：每个浓度对应一个 sheet，包含 pH、k₁–k₅、Y₁–Y₅ 等数据；另有汇总页（integrals）。
-
-- ✅ 积分表格：∫kᵢ dpH 的结果表。
-
-- ✅ 绘图：展示 pH = 2–14 范围内的累计分布（Cumulative Y）曲线，灰色虚线标注积分区间。
-
----
-
-## 依赖环境（Dependencies）
-
-| Package    | Version |
-| ---------- | ------- |
-| numpy      | 1.24.4  |
-| scipy      | 1.10.1  |
-| pandas     | 2.0.3   |
-| matplotlib | 3.7.2   |
-| openpyxl   | latest  |
-| gradio     | ≥4.0.0  |
-
----
-
-## 学术用途（For Research Use）
-
-本项目旨在为科研人员提供一种快速、可视化的硼物种分布计算方法。
-算法基于经典的酸碱平衡模型，适用于溶液化学、环境化学、材料吸附机理等研究。
+## Web interface
+Install requirements.txt and run python app.py (Python 3.10 recommended for the existing dependency pins).
+k1..k5 correspond to B3O3(OH)5^2-, B4O5(OH)4^2-, B5O6(OH)4-, B3O3(OH)4-, B(OH)4- respectively.
+Y values are cumulative sums in that order; B(OH)3_fraction is exported separately. Integrals over pH are mathematical summaries, not physical species abundances.
+The previously linked Hugging Face deployment is separate and has not been verified as synchronized with this corrected GitHub code.
